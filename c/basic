@@ -1,0 +1,110 @@
+/*******************************************************************
+ File:     basic
+ Purpose:  Detokenise basic programs
+ Author:   Justin Fletcher
+ Date:     16 Apr 1997
+ ******************************************************************/
+
+#include "basic.h"
+
+  char basetable[] = "\
+OTHERWISE\0AND\0DIV\0EOR\0MOD\0OR\0ERROR\0LINE\0OFF\0STEP\0SPC\0TAB(\0ELSE\0\
+THEN\0 unlistable token \0OPENIN\0PTR\0PAGE\0TIME\0LOMEM\0HIMEM\0ABS\0ACS\0\
+ADVAL\0ASC\0ASN\0ATN\0BGET\0COS\0COUNT\0DEG\0ERL\0ERR\0EVAL\0EXP\0EXT\0\
+FALSE\0FN\0GET\0INKEY\0INSTR(\0INT\0LEN\0LN\0LOG\0NOT\0OPENUP\0OPENOUT\0\
+PI\0POINT(\0POS\0RAD\0RND\0SGN\0SIN\0SQR\0TAN\0TO\0TRUE\0USR\0VAL\0\
+VPOS\0CHR$\0GET$\0INKEY$\0LEFT$(\0MID$(\0RIGHT$(\0STR$\0STRING$(\0EOF\0\
+\0\0\0WHEN\0OF\0ENDCASE\0ELSE\0ENDIF\0ENDWHILE\0PTR\0PAGE\0TIME\0LOMEM\0\
+HIMEM\0SOUND\0BPUT\0CALL\0CHAIN\0CLEAR\0CLOSE\0CLG\0CLS\0DATA\0DEF\0DIM\0\
+DRAW\0END\0ENDPROC\0ENVELOPE\0FOR\0GOSUB\0GOTO\0GCOL\0IF\0INPUT\0LET\0\
+LOCAL\0MODE\0MOVE\0NEXT\0ON\0VDU\0PLOT\0PRINT\0PROC\0READ\0REM\0REPEAT\0\
+REPORT\0RESTORE\0RETURN\0RUN\0STOP\0COLOUR\0TRACE\0UNTIL\0WIDTH\0OSCLI\0";
+
+/* Table for block */
+  int baseofs[] = {
+   0,  10,  14,  18,  22,  26,  29,  35,  40,  44,  49,  53,  58,  63,
+  68,  87,  94,  98, 103, 108, 114, 120, 124, 128, 134, 138, 142, 146,
+ 151, 155, 161, 165, 169, 173, 178, 182, 186, 192, 195, 199, 205, 212,
+ 216, 220, 223, 227, 231, 238, 246, 249, 256, 260, 264, 268, 272, 276,
+ 280, 284, 287, 292, 296, 300, 305, 310, 315, 322, 329, 335, 343, 348,
+ 357, 361, 362, 363, 364, 369, 372, 380, 385, 391, 400, 404, 409, 414,
+ 420, 426, 432, 437, 442, 448, 454, 460, 464, 468, 473, 477, 481, 486,
+ 490, 498, 507, 511, 517, 522, 527, 530, 536, 540, 546, 551, 556, 561,
+ 564, 568, 573, 579, 584, 589, 593, 600, 607, 615, 622, 626, 631, 638,
+ 644, 650, 656
+};
+
+  char extendedtable[] = "\
+CASE\0CIRCLE\0FILL\0ORIGIN\0POINT\0RECTANGLE\0SWAP\0WHILE\0WAIT\0MOUSE\0\
+QUIT\0SYS\0INSTALL\0LIBRARY\0TINT\0ELLIPSE\0BEATS\0TEMPO\0VOICES\0VOICE\0\
+STEREO\0OVERLAY\0APPEND\0AUTO\0CRUNCH\0DELETE\0EDIT\0HELP\0LIST\0LOAD\0\
+LVAR\0NEW\0OLD\0RENUMBER\0SAVE\0TEXTLOAD\0TEXTSAVE\0TWIN\0TWINO\0INSTALL\0\
+SUM\0BEAT\0";
+
+/* Table for block */
+  int extendedofs[] = {
+   0,   5,  12,  17,  24,  30,  40,  45,  51,  56,  62,  67,  71,  79,
+  87,  92, 100, 106, 112, 119, 125, 132, 140, 147, 152, 159, 166, 171,
+ 176, 181, 186, 191, 195, 199, 208, 213, 222, 231, 236, 242, 250, 254
+};
+
+char *decodeline(char *line, char *buffer,int flag)
+{
+  int ptr=0;
+  int num=0;
+  int len=0;
+  int quote=0;
+  char token;
+  char *tocopy;
+  num=(int)line[1]*256+(int)line[2]; len=line[3]-4; line+=4;
+  if ((flag & 1)==1)
+    ptr=numtotext(num,buffer,ptr);
+  while (len>0)
+  {
+    token=line[0];
+    if (token>0x7E && quote==0) {
+      tocopy=detokenise(line);
+      if (token>=0xc6 && token<= 0xc8)
+      { line+=2; len-=2; }
+      else
+      { line+=1; len-=1; }
+      while (tocopy[0] != 0)
+        buffer[ptr++]=(tocopy++)[0];
+    } else {
+      if (token=='"')
+        quote=1-quote;
+      buffer[ptr++]=token; line+=1; len-=1;
+    }
+  }
+  buffer[ptr]=0;
+  return buffer;
+}
+
+int numtotext(int num,char *buffer,int ptr)
+{
+  if (num>9)
+    ptr=numtotext(num/10,buffer,ptr);
+  buffer[ptr++]=(char)((num % 10)+48);
+  return ptr;
+}
+
+char *detokenise(char *ptr)
+{
+  char token=ptr[0];
+  char *table=basetable;
+  int *ofs=baseofs;
+  int base=0x7F;
+  if (token==0xC6) {
+    base=0xB6-0x8E; token=ptr[1];
+    table=extendedtable; ofs=extendedofs;
+  }
+  else if (token==0xC7) {
+    base=0xA4-0x8E; token=ptr[1];
+    table=extendedtable; ofs=extendedofs;
+  }
+  else if (token==0xC8) {
+    base=0x8E; token=ptr[1];
+    table=extendedtable; ofs=extendedofs;
+  }
+  return &table[ofs[token-base]];
+}

@@ -1,0 +1,62 @@
+/*******************************************************************
+ File:     main.c
+ Purpose:  Testing the basic detokeniser
+ Author:   Justin Fletcher
+ Date:     16 Apr 1997
+ ******************************************************************/
+
+#include "basic.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "VersionNum"
+
+int main(int argc,char *argv[])
+{
+  FILE *file;
+  FILE *out;
+  char buffer[256];
+  char output[512];
+  int ofs;
+  int len;
+  int flag=1; /* are we listing line numbers ?*/
+  char infile[256];
+  int base=1;
+  int done=0;
+
+  if ((argc==1) || (argc>4)) {
+    printf("BasToTxt " Module_FullVersionAndDate "\n");
+    printf("Syntax: BasToTxt [-l] <infile> [<outfile>]\n");
+    exit(0);
+  }
+  if (strcmp(argv[1],"-l")==0) {
+    base++; flag=0;
+  }
+  strcpy(infile,argv[base]);
+  if (argc==base+2) {
+    out=fopen(argv[base+1],"w");
+  } else {
+    out=stdout;
+  }
+  file=fopen(infile,"rb");
+  while (done==0)
+  {
+    buffer[0]=fgetc(file);
+    buffer[1]=fgetc(file);
+    if (buffer[1]!=0xff)
+    {
+      buffer[2]=fgetc(file);
+      len=(buffer[3]=fgetc(file))-4;
+      ofs=4;
+      while (len>0) {
+        buffer[ofs++]=fgetc(file); len--;
+      }
+      decodeline(buffer,output,flag);
+      fprintf(out,"%s\n",output);
+    }
+    else
+      done=1;
+  }
+  fclose(file);
+  fclose(out);
+}

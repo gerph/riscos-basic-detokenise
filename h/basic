@@ -1,0 +1,10 @@
+/*******************************************************************
+ File:     basic.h
+ Purpose:  Header for the basic decoder
+ Author:   Justin Fletcher
+ Date:     16 Apr 1997
+ ******************************************************************/
+
+int numtotext(int num,char *buffer,int ptr);
+char *detokenise(char *ptr);
+char *decodeline(char *line, char *buffer,int flag);
