@@ -1,9 +1,13 @@
 /*******************************************************************
- File:     main.c
- Purpose:  Testing the basic detokeniser
- Author:   Justin Fletcher
- Date:     16 Apr 1997
- Updated:  18 May 1997 (added multiple files, getopt and LIBRARY)
+ * File:     main.c
+ * Purpose:  Testing the basic detokeniser
+ * Author:   Justin Fletcher
+ * Date:     16 Apr 1997
+ * Updated:  18 May 1997 (added multiple files, getopt and LIBRARY)
+ * Updated:  07 Dec 1997 :
+ *       * Added help, changed options messages and added memory.h to ensure
+ *         that malloc's are safe.
+ *
  ******************************************************************/
 
 #include "basic.h"
@@ -11,9 +15,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "getopt.h"
+#include "memory.h"
 #include "VersionNum"
 
 static char banner[]="Basic To Text converter v" Module_FullVersionAndDate " [Justin Fletcher]\n";
+static char syntax[]="Syntax: BasToTxt [-h] [-v] [-j] [-l] -i <infile> [-o <outfile>]\n";
 
 /* a global */
 filelist *files=NULL;
@@ -22,8 +28,8 @@ int main(int argc,char *argv[])
 {
   FILE *file;
   FILE *out=stdout;
-  char buffer[256];
-  char output[512];
+  unsigned char buffer[256];
+  unsigned char output[512];
   int ofs;
   int len;
   int flag=OPT_LINES; /* are we listing line numbers ?*/
@@ -31,11 +37,10 @@ int main(int argc,char *argv[])
   int c;
 
   if (argc<2) {
-    printf("%sSyntax: BasToTxt [-j] [-l] -i <infile> [-o <outfile>]\n",
-           banner);
+    printf("%s%s",banner,syntax);
     exit(0);
   }
-  while ((c = getopt(argc, argv, "bjli:o:")) != EOF) {
+  while ((c = getopt(argc, argv, "hvjlbi:o:")) != EOF) {
     switch (c) {
       case 'l': /* toggle line numbers */
         flag^=OPT_LINES;
@@ -43,7 +48,10 @@ int main(int argc,char *argv[])
       case 'j': /* join files into a single block */
         flag^=OPT_JOIN;
         break;
-      case 'b': /* undocumented 'banner' function :-) */
+      case 'v': /* what version are we running ? */
+        printf("%s",banner);
+        exit(0);
+      case 'b': /* undocumented banner message */
         flag^=OPT_BANNER;
         break;
       case 'i': /* input file */
@@ -52,13 +60,25 @@ int main(int argc,char *argv[])
       case 'o':
         out=fopen(optarg,"w");
         break;
+      case 'h':
+        printf("\
+%s%s\n\
+  -l  Don't include line numbers in output\n\
+  -j  Include filenames as REM [{( File: <name> )}]\n\
+  -h  Display this help message\n\
+  -v  Display version information\n\
+  -i  Specify input file\n\
+  -o  Specify output file\n",banner,syntax);
+        exit(0);
     }
   }
 
   if (flag & OPT_BANNER)
+  {
     printf(banner);
+  }
   if (files==NULL) {
-    printf("Syntax: BasToTxt [-l] -i <infile> [-o <outfile>]\n");
+    printf("%s",syntax);
     exit(0);
   }
   while (files!=NULL) {
@@ -70,7 +90,7 @@ int main(int argc,char *argv[])
       exit(1);
     }
     if ( (flag & OPT_JOIN) )
-      fprintf(out,"0REM File: %s\n",files->name);
+      fprintf(out,"0REM [{( File: %s )}]\n",files->name);
     free(files->name); /* free the filename */
     free(files); files=next; /* move to next item */
     done=0;

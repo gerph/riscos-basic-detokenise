@@ -1,8 +1,12 @@
 /*******************************************************************
- File:     basic
- Purpose:  Detokenise basic programs
- Author:   Justin Fletcher
- Date:     16 Apr 1997
+ * File:     basic
+ * Purpose:  Detokenise basic programs
+ * Author:   Justin Fletcher
+ * Date:     16 Apr 1997
+ * Updated:  07 Dec 1997 :
+ *               * Changes char's into unsigned char's and char *'s into
+ *                 unsigned char *'s. This should allow it to compile (and
+ *                 run) on unix systems - I hope !
  ******************************************************************/
 
 #include "basic.h"
@@ -10,7 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-  char basetable[] = "\
+  unsigned char basetable[] = "\
 OTHERWISE\0AND\0DIV\0EOR\0MOD\0OR\0ERROR\0LINE\0OFF\0STEP\0SPC\0TAB(\0ELSE\0\
 THEN\0 unlistable token \0OPENIN\0PTR\0PAGE\0TIME\0LOMEM\0HIMEM\0ABS\0ACS\0\
 ADVAL\0ASC\0ASN\0ATN\0BGET\0COS\0COUNT\0DEG\0ERL\0ERR\0EVAL\0EXP\0EXT\0\
@@ -37,7 +41,7 @@ REPORT\0RESTORE\0RETURN\0RUN\0STOP\0COLOUR\0TRACE\0UNTIL\0WIDTH\0OSCLI\0";
  644, 650, 656
 };
 
-  char extendedtable[] = "\
+  unsigned char extendedtable[] = "\
 CASE\0CIRCLE\0FILL\0ORIGIN\0POINT\0RECTANGLE\0SWAP\0WHILE\0WAIT\0MOUSE\0\
 QUIT\0SYS\0INSTALL\0LIBRARY\0TINT\0ELLIPSE\0BEATS\0TEMPO\0VOICES\0VOICE\0\
 STEREO\0OVERLAY\0APPEND\0AUTO\0CRUNCH\0DELETE\0EDIT\0HELP\0LIST\0LOAD\0\
@@ -51,14 +55,14 @@ SUM\0BEAT\0";
  176, 181, 186, 191, 195, 199, 208, 213, 222, 231, 236, 242, 250, 254
 };
 
-char *decodeline(char *line, char *buffer,int flag)
+unsigned char *decodeline(unsigned char *line, unsigned char *buffer,int flag)
 {
   int ptr=0;
   int num=0;
   int len=0;
   int quote=0;
-  char token;
-  char *tocopy;
+  unsigned char token;
+  unsigned char *tocopy;
   num=(int)line[1]*256+(int)line[2]; len=line[3]-4; line+=4;
   if ((flag & OPT_LINES)==OPT_LINES)
     ptr=numtotext(num,buffer,ptr);
@@ -69,8 +73,8 @@ char *decodeline(char *line, char *buffer,int flag)
       if ( (token==0xc8) && (line[1]==0x9B) &&
            ((flag & OPT_JOIN)==OPT_JOIN) )
       {
-        char *n=line+2;   /* the next character */
-        char lib[256]=""; /* the library we're adding */
+        unsigned char *n=line+2;   /* the next character */
+        unsigned char lib[256]=""; /* the library we're adding */
 
         while (n[0]==' ') n++; /* skip white space */
         if (n[0] != '"') {
@@ -79,7 +83,7 @@ char *decodeline(char *line, char *buffer,int flag)
         }
         n++; /* next character */
         while (strchr("*#\" ",n[0])==NULL) {
-          sprintf(lib,"%s%c",lib,n[0]); n++;
+          sprintf((char *)lib,"%s%c",lib,n[0]); n++;
         }
         printf("String is %s, next is %c\n",lib,n[0]);
         if (n[0]!='"') {
@@ -92,7 +96,7 @@ char *decodeline(char *line, char *buffer,int flag)
           printf("Error: Invalid LIBRARY statement (after quote)\n");
           exit(1);
         }
-        files=addfile(files,lib);
+        files=addfile(files,(char *)lib);
       }
       tocopy=detokenise(line);
       if (token>=0xc6 && token<= 0xc8)
@@ -111,31 +115,34 @@ char *decodeline(char *line, char *buffer,int flag)
   return buffer;
 }
 
-int numtotext(int num,char *buffer,int ptr)
+int numtotext(int num,unsigned char *buffer,int ptr)
 {
   if (num>9)
     ptr=numtotext(num/10,buffer,ptr);
-  buffer[ptr++]=(char)((num % 10)+48);
+  buffer[ptr++]=(unsigned char)((num % 10)+'0');
   return ptr;
 }
 
-char *detokenise(char *ptr)
+unsigned char *detokenise(unsigned char *ptr)
 {
-  char token=ptr[0];
-  char *table=basetable;
+  unsigned char token=ptr[0];
+  unsigned char *table=basetable;
   int *ofs=baseofs;
   int base=0x7F;
+  /* printf("Got token %i = ",token); */
   if (token==0xC6) {
-    base=0xB6-0x8E; token=ptr[1];
+    base=(0x8E)-(0xB6-0x8E); token=ptr[1];
     table=extendedtable; ofs=extendedofs;
   }
   else if (token==0xC7) {
-    base=0xA4-0x8E; token=ptr[1];
+    base=(0x8E)-(0xA4-0x8E); token=ptr[1];
+    /* printf("(extended token = %i, really = %i) ",token,token-base); */
     table=extendedtable; ofs=extendedofs;
   }
   else if (token==0xC8) {
     base=0x8E; token=ptr[1];
     table=extendedtable; ofs=extendedofs;
   }
+  /* printf("%s\n",&table[ofs[token-base]]); */
   return &table[ofs[token-base]];
 }

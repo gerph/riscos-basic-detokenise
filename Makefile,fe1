@@ -27,7 +27,8 @@ LinkDllflags = $(linkflags)
 
 OBJS = \
        o.basic \
-       o.main
+       o.main \
+       o.memory
 
 LIBS = C:o.stubs C:o.getopt
 

@@ -1,0 +1,29 @@
+/*******************************************************************
+ * File:     memory.c
+ * Purpose:  Memory handling
+ * Author:   Justin Fletcher
+ * Date:     07 Dec 1997
+ ******************************************************************/
+
+#include <stdlib.h>
+#include <stdio.h>
+
+/*********************************************** <c> Gerph *********
+ Function:     my_malloc
+ Description:  Allocates memory, but crashes if the malloc failed
+               This will stop the computer crashing if (by some quirk
+               of fate or you happen to be using an Acorn) zero page
+               happens to be important.
+ Parameters:   as malloc
+ Returns:      pointer to memory - NEVER returns if failed
+ ******************************************************************/
+void *my_malloc(int x)
+{
+  void *y=malloc(x);
+  if (y==NULL)
+  {
+    fprintf(stderr,"Malloc failed: aborting!\n");
+    exit(1);
+  }
+  return y;
+}
