@@ -6,6 +6,9 @@
  ******************************************************************/
 
 #include "basic.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
   char basetable[] = "\
 OTHERWISE\0AND\0DIV\0EOR\0MOD\0OR\0ERROR\0LINE\0OFF\0STEP\0SPC\0TAB(\0ELSE\0\
@@ -57,12 +60,40 @@ char *decodeline(char *line, char *buffer,int flag)
   char token;
   char *tocopy;
   num=(int)line[1]*256+(int)line[2]; len=line[3]-4; line+=4;
-  if ((flag & 1)==1)
+  if ((flag & OPT_LINES)==OPT_LINES)
     ptr=numtotext(num,buffer,ptr);
   while (len>0)
   {
     token=line[0];
     if (token>0x7E && quote==0) {
+      if ( (token==0xc8) && (line[1]==0x9B) &&
+           ((flag & OPT_JOIN)==OPT_JOIN) )
+      {
+        char *n=line+2;   /* the next character */
+        char lib[256]=""; /* the library we're adding */
+
+        while (n[0]==' ') n++; /* skip white space */
+        if (n[0] != '"') {
+          printf("Error: Invalid LIBRARY statement (start quote)\n");
+          exit(1);
+        }
+        n++; /* next character */
+        while (strchr("*#\" ",n[0])==NULL) {
+          sprintf(lib,"%s%c",lib,n[0]); n++;
+        }
+        printf("String is %s, next is %c\n",lib,n[0]);
+        if (n[0]!='"') {
+          printf("Error: Invalid LIBRARY statement (end quote)\n");
+          exit(1);
+        }
+        n++; /* next character */
+        while (n[0]==' ') n++; /* skip white space */
+        if ( (n[0]!='\0') && (n[0] != ':') ) {
+          printf("Error: Invalid LIBRARY statement (after quote)\n");
+          exit(1);
+        }
+        files=addfile(files,lib);
+      }
       tocopy=detokenise(line);
       if (token>=0xc6 && token<= 0xc8)
       { line+=2; len-=2; }

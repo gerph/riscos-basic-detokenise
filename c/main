@@ -3,60 +3,120 @@
  Purpose:  Testing the basic detokeniser
  Author:   Justin Fletcher
  Date:     16 Apr 1997
+ Updated:  18 May 1997 (added multiple files, getopt and LIBRARY)
  ******************************************************************/
 
 #include "basic.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "getopt.h"
 #include "VersionNum"
+
+static char banner[]="Basic To Text converter v" Module_FullVersionAndDate " [Justin Fletcher]\n";
+
+/* a global */
+filelist *files=NULL;
 
 int main(int argc,char *argv[])
 {
   FILE *file;
-  FILE *out;
+  FILE *out=stdout;
   char buffer[256];
   char output[512];
   int ofs;
   int len;
-  int flag=1; /* are we listing line numbers ?*/
-  char infile[256];
-  int base=1;
+  int flag=OPT_LINES; /* are we listing line numbers ?*/
   int done=0;
+  int c;
 
-  if ((argc==1) || (argc>4)) {
-    printf("BasToTxt " Module_FullVersionAndDate "\n");
-    printf("Syntax: BasToTxt [-l] <infile> [<outfile>]\n");
+  if (argc<2) {
+    printf("%sSyntax: BasToTxt [-j] [-l] -i <infile> [-o <outfile>]\n",
+           banner);
     exit(0);
   }
-  if (strcmp(argv[1],"-l")==0) {
-    base++; flag=0;
-  }
-  strcpy(infile,argv[base]);
-  if (argc==base+2) {
-    out=fopen(argv[base+1],"w");
-  } else {
-    out=stdout;
-  }
-  file=fopen(infile,"rb");
-  while (done==0)
-  {
-    buffer[0]=fgetc(file);
-    buffer[1]=fgetc(file);
-    if (buffer[1]!=0xff)
-    {
-      buffer[2]=fgetc(file);
-      len=(buffer[3]=fgetc(file))-4;
-      ofs=4;
-      while (len>0) {
-        buffer[ofs++]=fgetc(file); len--;
-      }
-      decodeline(buffer,output,flag);
-      fprintf(out,"%s\n",output);
+  while ((c = getopt(argc, argv, "bjli:o:")) != EOF) {
+    switch (c) {
+      case 'l': /* toggle line numbers */
+        flag^=OPT_LINES;
+        break;
+      case 'j': /* join files into a single block */
+        flag^=OPT_JOIN;
+        break;
+      case 'b': /* undocumented 'banner' function :-) */
+        flag^=OPT_BANNER;
+        break;
+      case 'i': /* input file */
+        files=addfile(files,optarg);
+        break;
+      case 'o':
+        out=fopen(optarg,"w");
+        break;
     }
-    else
-      done=1;
   }
-  fclose(file);
+
+  if (flag & OPT_BANNER)
+    printf(banner);
+  if (files==NULL) {
+    printf("Syntax: BasToTxt [-l] -i <infile> [-o <outfile>]\n");
+    exit(0);
+  }
+  while (files!=NULL) {
+    filelist *next=files->next;
+
+    file=fopen(files->name,"rb");
+    if (file==NULL) {
+      printf("File '%s' not found\n",files->name);
+      exit(1);
+    }
+    if ( (flag & OPT_JOIN) )
+      fprintf(out,"0REM File: %s\n",files->name);
+    free(files->name); /* free the filename */
+    free(files); files=next; /* move to next item */
+    done=0;
+
+    while (done==0)
+    {
+      buffer[0]=fgetc(file);
+      buffer[1]=fgetc(file);
+      if (buffer[1]!=0xff)
+      {
+        buffer[2]=fgetc(file);
+        len=(buffer[3]=fgetc(file))-4;
+        ofs=4;
+        while (len>0) {
+          buffer[ofs++]=fgetc(file); len--;
+        }
+        decodeline(buffer,output,flag);
+        fprintf(out,"%s\n",output);
+      }
+      else
+        done=1;
+    }
+    fclose(file);
+  }
   fclose(out);
+}
+
+/* add a file to the list */
+filelist *addfile(filelist *list,char *name)
+{
+  filelist *newy=malloc(sizeof(filelist));
+  filelist *last=NULL;
+  filelist *entry=NULL;
+
+  newy->next=NULL; /* nothing following it */
+  newy->name=strcpy(malloc(strlen(name)+1),name); /* copy string */
+
+  entry=list;
+  while (entry!=NULL) {
+    last=entry;
+    entry=entry->next;
+  }
+
+  if (last==NULL)
+    return newy; /* no entries yet, so return this */
+
+  last->next=newy; /* link us in */
+  return list;
 }

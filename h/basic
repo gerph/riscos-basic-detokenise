@@ -5,6 +5,17 @@
  Date:     16 Apr 1997
  ******************************************************************/
 
+typedef struct filelist {
+  void *next;
+  char *name;
+} filelist;
+
+extern filelist *files;
+#define OPT_LINES 1
+#define OPT_JOIN 2
+#define OPT_BANNER 4
+/* prototypes */
+filelist *addfile(filelist *list,char *name);
 int numtotext(int num,char *buffer,int ptr);
 char *detokenise(char *ptr);
 char *decodeline(char *line, char *buffer,int flag);
