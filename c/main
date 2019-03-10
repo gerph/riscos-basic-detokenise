@@ -75,7 +75,7 @@ int main(int argc,char *argv[])
 
   if (flag & OPT_BANNER)
   {
-    printf(banner);
+    printf("%s", banner);
   }
   if (files==NULL) {
     printf("%s",syntax);
