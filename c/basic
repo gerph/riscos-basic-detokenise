@@ -85,7 +85,6 @@ unsigned char *decodeline(unsigned char *line, unsigned char *buffer,int flag)
         while (strchr("*#\" ",n[0])==NULL) {
           sprintf((char *)lib,"%s%c",lib,n[0]); n++;
         }
-        printf("String is %s, next is %c\n",lib,n[0]);
         if (n[0]!='"') {
           printf("Error: Invalid LIBRARY statement (end quote)\n");
           exit(1);
