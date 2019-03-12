@@ -1,0 +1,28 @@
+# Definition for CI within GitLab
+# Note:
+#    Prefix any job name with a '.' to disable.
+#
+
+
+# Enable submodules
+variables:
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
+
+
+# Default caching paths, between jobs
+cache:
+  paths:
+    - .env
+
+
+#### Build Jobs ####
+build:
+  stage: build
+  script:
+    - cd unix && make
+
+
+#### Stages to execute ####
+stages:
+  - build
