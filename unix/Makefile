@@ -1,12 +1,13 @@
 CC = gcc
+LIBS =
+INCS =
 CDEFINES =
-CFLAGS = -g
+CFLAGS = -g $(INCS)
 
 FILES = \
 	basic.c basic.h main.c memory.c \
 	memory.h VersionLog VersionNum
 
-LIBS =
 OBJS = \
   basic.o \
   main.o \
@@ -29,17 +30,17 @@ bastotxt: $(OBJS) $(LIBS)
 # Links
 basic.o: basic.c basic.h
 basic.c: ../c/basic
-	ln -s ../c/basic basic.c
+	ln -sf ../c/basic basic.c
 basic.h: ../h/basic
-	ln -s ../h/basic basic.h
+	ln -sf ../h/basic basic.h
 main.o: main.c basic.h memory.h VersionNum
 main.c: ../c/main
-	ln -s ../c/main main.c
+	ln -sf ../c/main main.c
 memory.c: ../c/memory
-	ln -s ../c/memory memory.c
+	ln -sf ../c/memory memory.c
 memory.h: ../h/memory
-	ln -s ../h/memory memory.h
+	ln -sf ../h/memory memory.h
 VersionLog: ../VersionLog
-	ln -s ../VersionLog VersionLog
+	ln -sf ../VersionLog VersionLog
 VersionNum: ../VersionNum
-	ln -s ../VersionNum VersionNum
+	ln -sf ../VersionNum VersionNum
