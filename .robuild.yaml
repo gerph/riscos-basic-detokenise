@@ -1,0 +1,35 @@
+%YAML 1.0
+---
+
+# Defines a list of jobs which will be performed.
+# Only 1 job will currently be executed.
+jobs:
+  build:
+    # Env defines system variables which will be used within the environment.
+    # Multiple variables may be assigned.
+    env:
+      "Sys$Environment": ROBuild
+      BUILD32: 1
+
+    # Directory to change to before running script
+    #dir: <working directory>
+
+    # Commands which should be executed to perform the build.
+    # The build will terminate if any command returns a non-0 return code or an error.
+    script:
+      - amu
+
+      - Echo Test that the tool runs
+      - /aif32.bastotxt -h
+
+      - Echo Build release archive
+      - cdir Release
+      - Copy aif32.BasToTxt Release.BasToTxt ~CVR
+
+    # Outputs from the build are defined in artifacts
+    # These are a list of artifacts to report directories or files.
+    # Only a single item is currently supported.
+    artifacts:
+      # Each element of the artifacts should have a path key, which gives the file or
+      # directory to return.
+      - path: Release
