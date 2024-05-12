@@ -20,7 +20,7 @@ cache:
 build:
   stage: build
   script:
-    - cd unix && make
+    - cd posix && make
 
 
 #### Stages to execute ####

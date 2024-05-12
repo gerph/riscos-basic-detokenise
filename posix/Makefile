@@ -6,7 +6,7 @@ CFLAGS = -g $(INCS)
 
 FILES = \
 	basic.c basic.h main.c memory.c \
-	memory.h VersionLog VersionNum
+	memory.h VersionNum
 
 OBJS = \
   basic.o \
@@ -19,7 +19,7 @@ all: bastotxt
 links: $(FILES)
 
 clean:
-	-rm -f *.c *.h VersionLog VersionNum *.o bastotxt
+	-rm -f *.c *.h VersionNum *.o bastotxt
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CDEFINES) -c -o $@ $<
@@ -40,7 +40,5 @@ memory.c: ../c/memory
 	ln -sf ../c/memory memory.c
 memory.h: ../h/memory
 	ln -sf ../h/memory memory.h
-VersionLog: ../VersionLog
-	ln -sf ../VersionLog VersionLog
 VersionNum: ../VersionNum
 	ln -sf ../VersionNum VersionNum
