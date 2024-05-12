@@ -1,0 +1,72 @@
+# Project:   BasToTxt
+
+# MakeDir:
+#  o
+#  aif
+
+# Release:
+##  Docs.!Help
+#  @:BasToTxt          <- @:aif.BasToTxt
+
+COMPONENT=BasToTxt
+
+# Toolflags:
+CCflags = -c -Wc -fa -depend !Depend -IC:,<Lib$Dir>.GetOpt -apcs 3/32 -za -throwback
+C++flags = -c -depend !Depend -IC: -throwback
+Linkflags = -aif -c++ -o $@
+ObjAsmflags = -throwback -NoCache -depend !Depend
+CMHGflags = -apcs 3/32
+LibFileflags = -c -o $@
+Squeezeflags = -o $@
+PCflags = -c -depend !Depend -throwback -IP:
+JFPatchflags = -depend !Depend -throwback -out $@
+Bas2Txtflags = -j -b -o $@ -i 
+Basic2Cflags = -t -o $@ -4 -i 
+MakeDllflags = -o $@
+LinkDllflags = $(linkflags)
+
+OBJS = \
+       o.basic \
+       o.main \
+       o.memory
+
+LIBS = C:o.stubsg <Lib$Dir>.Getopt.o.libgetopt-32
+
+# Final targets:
+release: aif.$(COMPONENT)
+export:
+        @echo [No export of $(COMPONENT)]
+clean:
+
+
+# User-editable dependencies:
+aif.$(COMPONENT): \
+            $(OBJS) \
+            $(LIBS)
+        link $(linkflags) \
+            $(OBJS) \
+            $(LIBS)
+
+# Static dependencies:
+.SUFFIXES: .c .o .cmhg .h
+.c.o:
+        cc $(ccflags) -o $@ $<
+.cmhg.o:
+        cmunge $(cmhgflags) -o $@ $<
+.cmhg.h:
+        cmunge $(cmhgflags) -d $@ $<
+
+
+.INIT:
+    cdir o
+    cdir aif
+
+# Dynamic dependencies:
+o.memory:	c.memory
+o.basic:	c.basic
+o.basic:	h.basic
+o.main:	c.main
+o.main:	h.basic
+o.main:	<Lib$Dir>.GetOpt.h.getopt
+o.main:	h.memory
+o.main:	VersionNum
